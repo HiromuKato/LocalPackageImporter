@@ -1,0 +1,2 @@
+# UnityPackageImporter
+ロカールにあるunitypackageを一覧表示しインポートを可能とするエディタ拡張
