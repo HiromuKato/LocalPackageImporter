@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEditor;
+using System;
 using System.IO;
 using System.IO.Compression;
 using System.Collections.Generic;
@@ -19,9 +20,9 @@ namespace UnityPackageImporter
         private const string menuName = "Tool/UnityPackageImporter";
 
         /// <summary>
-        /// ローカルのunitypackage格納ディレクトリパス(★ユーザ環境に合わせて更新する)
+        /// ローカルのunitypackage格納ディレクトリパス
         /// </summary>
-        private readonly string localPath = "C: /Users/##USERNAME##/AppData/Roaming/Unity/Asset Store-5.x";
+        private string localPath;
 
         /// <summary>
         /// tmpディレクトリパス（サムネイルを取得するためにここに一時的にunitypackageを解凍する）
@@ -137,6 +138,7 @@ namespace UnityPackageImporter
         private void OnEnable()
         {
             thumbList = new List<Texture>();
+            localPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/Unity/Asset Store-5.x";
             tmpPath = Application.dataPath + "/UnityPackageImporter/Editor/tmp";
             thumbPath = Application.dataPath + "/UnityPackageImporter/Editor/Thumbs";
             noImage = (Texture)AssetDatabase.LoadAssetAtPath("Assets/UnityPackageImporter/Editor/noImage.png", typeof(Texture2D));
