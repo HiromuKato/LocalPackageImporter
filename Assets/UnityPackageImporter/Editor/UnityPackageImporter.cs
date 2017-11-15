@@ -4,7 +4,6 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using System.Collections.Generic;
-// NuGetでSharpZipLibをインストールしpackages/SharpZipLib.0.86.0/lib/20にあるICSharpCode.SharpZipLib.dllをPluginsに配置する
 using ICSharpCode.SharpZipLib.Tar;
 
 namespace UnityPackageImporter
