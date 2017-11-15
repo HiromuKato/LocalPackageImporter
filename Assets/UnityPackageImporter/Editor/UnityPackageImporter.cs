@@ -5,6 +5,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Collections.Generic;
 using ICSharpCode.SharpZipLib.Tar;
+using UnityEditorInternal;
 
 namespace UnityPackageImporter
 {
@@ -29,9 +30,9 @@ namespace UnityPackageImporter
         private string tmpPath;
 
         /// <summary>
-        /// サムネイル画像を格納するディレクトリパス
+        /// unitypackage情報（サムネイルとjson）を格納するディレクトリパス
         /// </summary>
-        private string thumbPath;
+        private string infoPath;
 
         /// <summary>
         /// unitypackageファイルのフルパスリスト
@@ -84,7 +85,7 @@ namespace UnityPackageImporter
         /// <summary>
         /// Importボタンの幅
         /// </summary>
-        private readonly int buttonWidth = 60;
+        private readonly int buttonWidth = 80;
 
         /// <summary>
         /// Importボタンの高さ
@@ -139,7 +140,7 @@ namespace UnityPackageImporter
             thumbList = new List<Texture>();
             localPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/Unity/Asset Store-5.x";
             tmpPath = Application.dataPath + "/UnityPackageImporter/Editor/tmp";
-            thumbPath = Application.dataPath + "/UnityPackageImporter/Editor/Thumbs";
+            infoPath = Application.dataPath + "/UnityPackageImporter/Editor/PackageInfo";
             noImage = (Texture)AssetDatabase.LoadAssetAtPath("Assets/UnityPackageImporter/Editor/noImage.png", typeof(Texture2D));
 
             // unitypackageファイルのリストを取得する
@@ -178,6 +179,9 @@ namespace UnityPackageImporter
                     if(GUILayout.Button("Get Thumbnails."))
                     {
                         GetThumbnailsFromPackage();
+
+                        // ついでにパッケージ情報も取得する
+                        GetUnityackageInfo();
                     }
                 }
                 EditorGUILayout.EndHorizontal();
@@ -212,10 +216,33 @@ namespace UnityPackageImporter
 
                     EditorGUILayout.BeginHorizontal(GUI.skin.box);
                     {
-                        if (GUILayout.Button("Import", GUILayout.Width(buttonWidth), GUILayout.Height(buttonHeight)))
+                        EditorGUILayout.BeginVertical();
                         {
-                            ImportPackage(path);
+                            if (GUILayout.Button("Import", GUILayout.Width(buttonWidth), GUILayout.Height(buttonHeight)))
+                            {
+                                ImportPackage(path);
+                            }
+
+                            string id = GetContentId(path);
+                            bool disable = false;
+                            if(id == null)
+                            {
+                                disable = true;
+                            }
+                            EditorGUI.BeginDisabledGroup(disable);
+                            {
+                                if (GUILayout.Button("Asset Store", GUILayout.Width(buttonWidth), GUILayout.Height(buttonHeight)))
+                                {
+                                    AssetStore.Open("/content/" + id);
+
+                                    // 外部ブラウザで開く場合
+                                    //Application.OpenURL("https://www.assetstore.unity3d.com/jp/#!/content/37864");
+                                }
+                            }
+                            EditorGUI.EndDisabledGroup();
                         }
+                        EditorGUILayout.EndVertical();
+
 
                         if(thumbList[i])
                         {
@@ -288,7 +315,7 @@ namespace UnityPackageImporter
             foreach(var path in allList)
             {
                 string fileNameNoExt = Path.GetFileNameWithoutExtension(path);
-                string dir = thumbPath.Replace(Application.dataPath, "Assets");
+                string dir = infoPath.Replace(Application.dataPath, "Assets");
                 ThumbInfo info = new ThumbInfo();
                 info.name = fileNameNoExt;
                 info.thumb = (Texture)AssetDatabase.LoadAssetAtPath(dir + "/" + fileNameNoExt + "/icon.png", typeof(Texture2D));
@@ -333,36 +360,149 @@ namespace UnityPackageImporter
 
                 // ファイル名から拡張子をのぞいた文字列を取得
                 string fileNameNoExt = Path.GetFileNameWithoutExtension(allList[i]);
+                // サムネイル保存先パス
+                string thumbDir = infoPath + "/" + fileNameNoExt;
 
-                // 既に同ディレクトリがThumbsフォルダ内に存在する場合
-                if(Directory.Exists(thumbPath + "/" + fileNameNoExt))
+                // 既にアイコンファイルが存在する場合
+                if(File.Exists(thumbDir + "/icon.png" ))
                 {
                     continue;
                 }
 
-                // ディレクトリ作成
-                DirectoryInfo tmpDir = Directory.CreateDirectory(tmpPath + "/" + fileNameNoExt);
+                string tmpDir = tmpPath + "/" + fileNameNoExt;
+                // 保存先のディレクトリが存在しない場合は作成する
+                if (!Directory.Exists(tmpDir))
+                {
+                    Directory.CreateDirectory(tmpDir);
+                }
 
                 //unitypackage(tar.gz)を読み取り専用で開く
                 using (var tgzStream = File.OpenRead(allList[i]))
-                //GZipStreamオブジェクトを解凍で生成
-                using (var gzStream = new GZipStream(tgzStream, CompressionMode.Decompress))
-                using (var tarArchive = TarArchive.CreateInputTarArchive(gzStream))
                 {
-                    //指定したディレクトリにtarを展開
-                    tarArchive.ExtractContents(tmpDir.FullName);
+                    //GZipStreamオブジェクトを解凍で生成
+                    using (var gzStream = new GZipStream(tgzStream, CompressionMode.Decompress))
+                    {
+                        using (var tarArchive = TarArchive.CreateInputTarArchive(gzStream))
+                        {
+                            //指定したディレクトリにtarを展開
+                            tarArchive.ExtractContents(tmpDir);
+                        }
+                    }
                 }
 
+                // 保存先のディレクトリが存在しない場合は作成する
+                if (!Directory.Exists(thumbDir))
+                {
+                    Directory.CreateDirectory(thumbDir);
+                }
                 // サムネイルをThumbs配下にコピー
-                DirectoryInfo thumbDir = Directory.CreateDirectory(thumbPath + "/" + fileNameNoExt);
-                File.Copy(tmpDir.FullName + "/.icon.png", thumbDir.FullName + "/icon.png", true);
+                File.Copy(tmpDir + "/.icon.png", thumbDir + "/icon.png", true);
 
                 // 解凍したパッケージフォルダを削除
-                Directory.Delete(tmpDir.FullName, true);
+                Directory.Delete(tmpDir, true);
             }
             EditorUtility.ClearProgressBar();
             AssetDatabase.Refresh();
             LoadAllThumbnails();
+        }
+
+        /// <summary>
+        /// unitypackageのバイナリデータからパッケージ情報を取得しjsonファイルに保存する
+        /// GZIPのフォーマットについては以下を参照
+        /// http://openlab.ring.gr.jp/tsuneo/soft/tar32_2/tar32_2/sdk/TAR_FMT.TXT
+        /// </summary>
+        private void GetUnityackageInfo()
+        {
+            List<string> allList = GetPackageList(localPath);
+            for (int i = 0; i < allList.Count; ++i)
+            {
+                // unitypackageファイルを開く
+                using (FileStream fs = new FileStream(allList[i], FileMode.Open, FileAccess.Read))
+                {
+                    // マジックナンバー
+                    byte[] magicNum = new byte[2];
+                    // フラグ(3bit目が1の場合拡張フィールドが存在する)
+                    byte[] flag = new byte[1];
+                    // 拡張フィールドのサイズ
+                    byte[] extSize = new byte[2];
+
+                    // 現在のFileStreamの位置を保存
+                    long fpos = fs.Position;
+
+                    // マジックナンバーの読み込み
+                    fs.Read(magicNum, 0, 2);
+                    //Debug.Log("magicNum:" + BitConverter.ToString(magicNum).Replace("-", " "));
+                    // マジックナンバーの確認
+                    if(magicNum[0] != 0x1F || magicNum[1] != 0x8B)
+                    {
+                        Debug.LogWarning("Invalid unitypackage file.");
+                        continue;
+                    }
+
+                    // FileStreamが指す位置を4バイト目に移動する
+                    fpos = fs.Seek(3, SeekOrigin.Begin);
+                    // フラグの読み込み
+                    fs.Read(flag, 0, 1);
+                    //Debug.Log("flag:" + BitConverter.ToString(flag) + "(16進数), " + Convert.ToString(flag[0], 2) + "(2進数)");
+                    // 3bit目が1になっているか（拡張フィールドが存在するか）確認
+                    if(((flag[0] & 0x04) >> 2) != 1)
+                    {
+                        Debug.LogWarning("Extention field not found.");
+                        continue;
+                    }
+
+                    // FileStreamが指す位置を11バイト目に移動する
+                    fpos = fs.Seek(10, SeekOrigin.Begin);
+                    // 拡張フィールドのサイズの読み込み
+                    fs.Read(extSize, 0, 2);
+                    int size = BitConverter.ToInt16(extSize, 0);
+                    //Debug.Log("extSize:" + BitConverter.ToString(extSize).Replace("-", " ") + "(16進数), " + size + "(10進数)");
+                    byte[] extField = new byte[size];
+
+                    // 拡張フィールドを読み込む
+                    fs.Read(extField, 0, size);
+                    //Debug.Log("extField:" + BitConverter.ToString(extField).Replace("-", " "));
+                    //string str = System.Text.Encoding.UTF8.GetString(extField);
+                    //Debug.Log("extField(text):" + str);
+
+                    // 保存先のディレクトリが存在しない場合は作成する
+                    string fileNameNoExt = Path.GetFileNameWithoutExtension(allList[i]);
+                    string dir = infoPath + "/" + fileNameNoExt;
+                    if (!Directory.Exists(dir))
+                    {
+                        Directory.CreateDirectory(dir);
+                    }
+                    // 拡張フィールドの内容をファイルに書き込む
+                    using (FileStream outFs = new FileStream(dir + "/info.json", FileMode.Create, FileAccess.Write))
+                    {
+                        // 4バイト不明なデータが入っているのでoffsetを4としている
+                        int offset = 4;
+                        outFs.Write(extField, offset, extField.Length - offset);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// アセットストアのコンテンツIDを取得する
+        /// </summary>
+        /// <param name="path">unitypackageのパス</param>
+        /// <returns></returns>
+        private string GetContentId(string path)
+        {
+            string fileNameNoExt = Path.GetFileNameWithoutExtension(path);
+            string jsonPath = infoPath + "/" + fileNameNoExt + "/info.json";
+            if(!File.Exists(jsonPath))
+            {
+                return null;
+            }
+            string json = File.ReadAllText(jsonPath);
+            //Debug.Log(json);
+
+            // JSONからオブジェクトを作成(一通り取得しているが現状はidしか利用していない)
+            UnityPackageInfo info = new UnityPackageInfo();
+            info = JsonUtility.FromJson<UnityPackageInfo>(json);
+            return info.id;
         }
 
         /// <summary>
