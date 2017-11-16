@@ -138,7 +138,7 @@ namespace UnityPackageImporter
         private void OnEnable()
         {
             thumbList = new List<Texture>();
-            localPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/Unity/Asset Store-5.x";
+            localPath = GetLocalPackagePath();
             tmpPath = Application.dataPath + "/UnityPackageImporter/Editor/tmp";
             infoPath = Application.dataPath + "/UnityPackageImporter/Editor/PackageInfo";
             noImage = (Texture)AssetDatabase.LoadAssetAtPath("Assets/UnityPackageImporter/Editor/noImage.png", typeof(Texture2D));
@@ -154,6 +154,29 @@ namespace UnityPackageImporter
             // 保持している全サムネイルを事前に読み込んでおく
             allThumbInfo = new List<ThumbInfo>();
             LoadAllThumbnails();
+        }
+
+        /// <summary>
+        /// unitypackageが格納されているパスを取得する
+        /// </summary>
+        /// <returns>unitypackageが格納されているパス</returns>
+        private string GetLocalPackagePath()
+        {
+            string path = "";
+            if (SystemInfo.operatingSystem.Contains ("Windows")) 
+            {
+                path = Environment.GetFolderPath (Environment.SpecialFolder.ApplicationData) + "/Unity/Asset Store-5.x";
+            }
+            else if (SystemInfo.operatingSystem.Contains ("Mac")) 
+            {
+                path = Environment.GetFolderPath (Environment.SpecialFolder.MyDocuments) + "/Library/Unity/Asset Store-5.x";
+            } 
+            else
+            {
+				Debug.LogWarning ("Unknown Operating System.");
+                path = "";
+            }
+            return path;
         }
 
         /// <summary>
