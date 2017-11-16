@@ -32,3 +32,8 @@ sysinfo.txt
 # Builds
 *.apk
 *.unitypackage
+
+/Assets/UnityPackageImporter/Editor/PackageInfo/*
+/Assets/UnityPackageImporter/Editor/PackageInfo.meta
+/Assets/UnityPackageImporter/Editor/tmp/*
+/Assets/UnityPackageImporter/Editor/tmp.meta

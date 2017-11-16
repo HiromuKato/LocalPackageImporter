@@ -163,14 +163,14 @@ namespace UnityPackageImporter
         private string GetLocalPackagePath()
         {
             string path = "";
-            if (SystemInfo.operatingSystem.Contains ("Windows")) 
+            if (SystemInfo.operatingSystem.Contains ("Windows"))
             {
                 path = Environment.GetFolderPath (Environment.SpecialFolder.ApplicationData) + "/Unity/Asset Store-5.x";
             }
-            else if (SystemInfo.operatingSystem.Contains ("Mac")) 
+            else if (SystemInfo.operatingSystem.Contains ("Mac"))
             {
                 path = Environment.GetFolderPath (Environment.SpecialFolder.MyDocuments) + "/Library/Unity/Asset Store-5.x";
-            } 
+            }
             else
             {
 				Debug.LogWarning ("Unknown Operating System.");
