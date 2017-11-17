@@ -40,22 +40,24 @@ namespace UnityPackageImporter
         private List<string> packagePathList;
 
         /// <summary>
-        /// サムネイル情報を保持する構造体
+        /// unitypackage情報を保持する構造体
         /// </summary>
-        private struct ThumbInfo
+        private struct UnityPackageInfo
         {
             public string name;
             public Texture thumb;
+            public string size;
+            public string id;
         }
         /// <summary>
-        /// 全サムネイル情報のリスト
+        /// 全unitypackage情報のリスト
         /// </summary>
-        private List<ThumbInfo> allThumbInfo;
+        private List<UnityPackageInfo> allPackageInfo;
 
         /// <summary>
-        /// 表示に利用するサムネイルリスト
+        /// 表示するunitypackageリスト
         /// </summary>
-        private List<Texture> thumbList;
+        private List<UnityPackageInfo> dispList;
 
         /// <summary>
         /// サムネイルが見つからなかった場合の代替画像
@@ -78,6 +80,11 @@ namespace UnityPackageImporter
         private string searchWord = "";
 
         /// <summary>
+        /// 検索TextFieldの幅
+        /// </summary>
+        private readonly int searchWidth = 150;
+
+        /// <summary>
         /// スクロールポジション
         /// </summary>
         private Vector2 scrollPos;
@@ -88,19 +95,9 @@ namespace UnityPackageImporter
         private readonly int buttonWidth = 80;
 
         /// <summary>
-        /// Importボタンの高さ
-        /// </summary>
-        private readonly int buttonHeight = 20;
-
-        /// <summary>
         /// package名の幅
         /// </summary>
         private readonly int nameWidth = 250;
-
-        /// <summary>
-        /// １項目分の共通の高さ
-        /// </summary>
-        private readonly int height = 64;
 
         /// <summary>
         /// Windowを表示する
@@ -137,7 +134,7 @@ namespace UnityPackageImporter
         /// </summary>
         private void OnEnable()
         {
-            thumbList = new List<Texture>();
+            dispList = new List<UnityPackageInfo>();
             localPath = GetLocalPackagePath();
             tmpPath = Application.dataPath + "/UnityPackageImporter/Editor/tmp";
             infoPath = Application.dataPath + "/UnityPackageImporter/Editor/PackageInfo";
@@ -151,9 +148,9 @@ namespace UnityPackageImporter
                 DestroyImmediate(this);
             }
 
-            // 保持している全サムネイルを事前に読み込んでおく
-            allThumbInfo = new List<ThumbInfo>();
-            LoadAllThumbnails();
+            // PackageInfoフォルダに保持しているunitypackage情報を事前に読み込んでおく
+            allPackageInfo = new List<UnityPackageInfo>();
+            LoadAllPackageInfo();
         }
 
         /// <summary>
@@ -173,7 +170,7 @@ namespace UnityPackageImporter
             }
             else
             {
-				Debug.LogWarning ("Unknown Operating System.");
+                Debug.LogWarning ("Unknown Operating System.");
                 path = "";
             }
             return path;
@@ -187,7 +184,7 @@ namespace UnityPackageImporter
             if (packagePathList == null)
             {
                 packagePathList = GetPackageList(localPath);
-                SetThumbnails();
+                SetPackageInfo();
             }
             EditorGUILayout.Space();
 
@@ -196,15 +193,14 @@ namespace UnityPackageImporter
             {
                 EditorGUILayout.BeginHorizontal();
                 {
-                    searchWord = GUILayout.TextField(searchWord);
+                    searchWord = GUILayout.TextField(searchWord, GUILayout.Width(searchWidth));
                     GUILayout.Label("Search", EditorStyles.boldLabel);
 
-                    if(GUILayout.Button("Get Thumbnails."))
+                    if(GUILayout.Button("Get Package info"))
                     {
-                        GetThumbnailsFromPackage();
-
-                        // ついでにパッケージ情報も取得する
-                        GetUnityackageInfo();
+                        ExtractUnityPackageInfo();
+                        ExtractThumbnailsFromPackage();
+                        LoadAllPackageInfo();
                     }
                 }
                 EditorGUILayout.EndHorizontal();
@@ -221,7 +217,7 @@ namespace UnityPackageImporter
                     // 空白のときは全てのパッケージを表示する
                     packagePathList = GetPackageList(localPath);
                 }
-                SetThumbnails();
+                SetPackageInfo();
             }
             EditorGUILayout.Space();
 
@@ -234,50 +230,50 @@ namespace UnityPackageImporter
                     string path = packagePathList[i];
                     // 拡張子を除いたファイル名
                     string fileNameNoExt = Path.GetFileNameWithoutExtension(path);
-                    // ディレクトリパス（ファイル名を除いたもの）
-                    //string directryPath = Path.GetDirectoryName(path);
 
                     EditorGUILayout.BeginHorizontal(GUI.skin.box);
                     {
-                        EditorGUILayout.BeginVertical();
+                        EditorGUILayout.BeginVertical(GUILayout.Width(buttonWidth));
                         {
-                            if (GUILayout.Button("Import", GUILayout.Width(buttonWidth), GUILayout.Height(buttonHeight)))
+                            if (GUILayout.Button("Import"))
                             {
                                 ImportPackage(path);
                             }
 
-                            string id = GetContentId(path);
                             bool disable = false;
-                            if(id == null)
+                            if(dispList[i].id == null)
                             {
                                 disable = true;
                             }
                             EditorGUI.BeginDisabledGroup(disable);
                             {
-                                if (GUILayout.Button("Asset Store", GUILayout.Width(buttonWidth), GUILayout.Height(buttonHeight)))
+                                if (GUILayout.Button("Asset Store"))
                                 {
-                                    AssetStore.Open("/content/" + id);
+                                    AssetStore.Open("/content/" + dispList[i].id);
 
                                     // 外部ブラウザで開く場合
-                                    //Application.OpenURL("https://www.assetstore.unity3d.com/jp/#!/content/37864");
+                                    //Application.OpenURL("https://www.assetstore.unity3d.com/jp/#!/content/" + dispList[i].id);
                                 }
                             }
                             EditorGUI.EndDisabledGroup();
                         }
                         EditorGUILayout.EndVertical();
 
-
-                        if(thumbList[i])
+                        if(dispList[i].thumb)
                         {
-                            GUILayout.Button(thumbList[i], GUI.skin.box, GUILayout.Width(thumbWitdh), GUILayout.Height(thumbHeight));
+                            GUILayout.Button(dispList[i].thumb, GUI.skin.box, GUILayout.Width(thumbWitdh), GUILayout.Height(thumbHeight));
                         }
                         else
                         {
                             GUILayout.Button(noImage, GUI.skin.box, GUILayout.Width(thumbWitdh), GUILayout.Height(thumbHeight));
                         }
 
-                        GUILayout.Label(fileNameNoExt, GUILayout.Width(nameWidth), GUILayout.Height(height));
-                        //GUILayout.Label(directryPath, GUILayout.Height(height));
+                        EditorGUILayout.BeginVertical(GUILayout.Width(nameWidth));
+                        {
+                            GUILayout.Label(fileNameNoExt);
+                            GUILayout.Label("サイズ: " + dispList[i].size);
+                        }
+                        EditorGUILayout.EndVertical();
                     }
                     EditorGUILayout.EndHorizontal();
                 }
@@ -329,50 +325,53 @@ namespace UnityPackageImporter
         }
 
         /// <summary>
-        /// 保持しているサムネイル画像を全て読み込む
+        /// 保持しているunitypackage情報を全て読み込む
         /// </summary>
-        private void LoadAllThumbnails()
+        private void LoadAllPackageInfo()
         {
-            allThumbInfo.Clear();
+            allPackageInfo.Clear();
             List<string> allList = GetPackageList(localPath);
             foreach(var path in allList)
             {
                 string fileNameNoExt = Path.GetFileNameWithoutExtension(path);
                 string dir = infoPath.Replace(Application.dataPath, "Assets");
-                ThumbInfo info = new ThumbInfo();
+                UnityPackageInfo info = new UnityPackageInfo();
                 info.name = fileNameNoExt;
                 info.thumb = (Texture)AssetDatabase.LoadAssetAtPath(dir + "/" + fileNameNoExt + "/icon.png", typeof(Texture2D));
-                allThumbInfo.Add(info);
+                info.id = GetContentId(path);
+                info.size = GetPackageSize(path);
+                allPackageInfo.Add(info);
             }
-            SetThumbnails();
+            SetPackageInfo();
+            AssetDatabase.Refresh();
         }
 
         /// <summary>
-        /// 表示用のサムネイル画像を設定する(packagePathListが変更されたときに呼ぶ必要がある)
-        /// 保持している全サムネイルリストから名前が一致するものを表示用のリストに追加する
-        /// -> 都度LoadAssetするのを避けるためにこのような処理とした
+        /// 表示するunitypackage情報を設定する(packagePathListが変更されたときに呼ぶ必要がある)
+        /// 保持している全unitypackageから名前が一致するものを表示用のリストに追加する
+        /// -> サムネイルのLoadAssetやファイルアクセスを都度行うのを避けるためにこのような処理とした
         /// </summary>
-        private void SetThumbnails()
+        private void SetPackageInfo()
         {
-            thumbList.Clear();
-            for(int i = 0; i < allThumbInfo.Count; ++i)
+            dispList.Clear();
+            for(int i = 0; i < allPackageInfo.Count; ++i)
             {
                 for(int j = 0; j < packagePathList.Count; ++j)
                 {
                     string filenameNoExt = Path.GetFileNameWithoutExtension(packagePathList[j]);
-                    if (allThumbInfo[i].name == filenameNoExt)
+                    if (allPackageInfo[i].name == filenameNoExt)
                     {
-                        thumbList.Add(allThumbInfo[i].thumb);
+                        dispList.Add(allPackageInfo[i]);
                     }
                 }
             }
         }
 
         /// <summary>
-        /// unitypackageからサムネイルを取得しThumbsフォルダ配下に保存する
+        /// unitypackageからサムネイルを取得しPackageInfoフォルダ配下に保存する
         /// （注意：unitypackageを解凍してサムネイルを取り出すので時間がかかります）
         /// </summary>
-        private void GetThumbnailsFromPackage()
+        private void ExtractThumbnailsFromPackage()
         {
             List<string> allList = GetPackageList(localPath);
 
@@ -418,15 +417,13 @@ namespace UnityPackageImporter
                 {
                     Directory.CreateDirectory(thumbDir);
                 }
-                // サムネイルをThumbs配下にコピー
+                // サムネイルをPackageInfo配下にコピー
                 File.Copy(tmpDir + "/.icon.png", thumbDir + "/icon.png", true);
 
                 // 解凍したパッケージフォルダを削除
                 Directory.Delete(tmpDir, true);
             }
             EditorUtility.ClearProgressBar();
-            AssetDatabase.Refresh();
-            LoadAllThumbnails();
         }
 
         /// <summary>
@@ -434,7 +431,7 @@ namespace UnityPackageImporter
         /// GZIPのフォーマットについては以下を参照
         /// http://openlab.ring.gr.jp/tsuneo/soft/tar32_2/tar32_2/sdk/TAR_FMT.TXT
         /// </summary>
-        private void GetUnityackageInfo()
+        private void ExtractUnityPackageInfo()
         {
             List<string> allList = GetPackageList(localPath);
             for (int i = 0; i < allList.Count; ++i)
@@ -507,6 +504,21 @@ namespace UnityPackageImporter
         }
 
         /// <summary>
+        /// unitypackageのファイルサイズを取得する
+        /// </summary>
+        /// <param name="packagePath">ファイルパス</param>
+        /// <returns>ファイルサイズ</returns>
+        private string GetPackageSize(string packagePath)
+        {
+            string size = "";
+            using (var fs = File.OpenRead(packagePath))
+            {
+                size = ((float)fs.Length / 1000000).ToString("0.0") + " MB";
+            }
+            return size;
+        }
+
+        /// <summary>
         /// アセットストアのコンテンツIDを取得する
         /// </summary>
         /// <param name="path">unitypackageのパス</param>
@@ -520,7 +532,6 @@ namespace UnityPackageImporter
                 return null;
             }
             string json = File.ReadAllText(jsonPath);
-            //Debug.Log(json);
 
             // JSONからオブジェクトを作成(一通り取得しているが現状はidしか利用していない)
             UnityPackageInfo info = new UnityPackageInfo();
