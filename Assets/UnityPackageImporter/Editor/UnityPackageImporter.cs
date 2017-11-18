@@ -50,14 +50,19 @@ namespace UnityPackageImporter
             public string id;
         }
         /// <summary>
-        /// 全unitypackage情報のリスト
+        /// 保持しているunitypackage情報のリスト
         /// </summary>
-        private List<UnityPackageInfo> allPackageInfo;
+        private List<UnityPackageInfo> ownedPackageInfo;
 
         /// <summary>
         /// 表示するunitypackageリスト
         /// </summary>
         private List<UnityPackageInfo> dispList;
+
+        /// <summary>
+        /// ローカルに保存されているunitypackageの数
+        /// </summary>
+        private int allPackageNum = 0;
 
         /// <summary>
         /// サムネイルが見つからなかった場合の代替画像
@@ -144,7 +149,7 @@ namespace UnityPackageImporter
             }
 
             // PackageInfoフォルダに保持しているunitypackage情報を事前に読み込んでおく
-            allPackageInfo = new List<UnityPackageInfo>();
+            ownedPackageInfo = new List<UnityPackageInfo>();
             LoadAllPackageInfo();
         }
 
@@ -189,7 +194,8 @@ namespace UnityPackageImporter
                 EditorGUILayout.BeginHorizontal();
                 {
                     searchWord = GUILayout.TextField(searchWord, GUILayout.Width(searchWidth));
-                    GUILayout.Label("Search", EditorStyles.boldLabel);
+                    string count = "(" + packagePathList.Count + "/" + allPackageNum + ")";
+                    GUILayout.Label("Search" + count, EditorStyles.boldLabel);
 
                     if(GUILayout.Button("Get Package info"))
                     {
@@ -296,6 +302,7 @@ namespace UnityPackageImporter
             {
                 pathList.Add(files[i].FullName);
             }
+            allPackageNum = pathList.Count;
             return pathList;
         }
 
@@ -324,7 +331,7 @@ namespace UnityPackageImporter
         /// </summary>
         private void LoadAllPackageInfo()
         {
-            allPackageInfo.Clear();
+            ownedPackageInfo.Clear();
             List<string> allList = GetPackageList(localPath);
             foreach(var path in allList)
             {
@@ -335,7 +342,7 @@ namespace UnityPackageImporter
                 info.thumb = (Texture)AssetDatabase.LoadAssetAtPath(dir + "/" + fileNameNoExt + "/icon.png", typeof(Texture2D));
                 info.id = GetContentId(path);
                 info.size = GetPackageSize(path);
-                allPackageInfo.Add(info);
+                ownedPackageInfo.Add(info);
             }
             SetPackageInfo();
             AssetDatabase.Refresh();
@@ -343,20 +350,20 @@ namespace UnityPackageImporter
 
         /// <summary>
         /// 表示するunitypackage情報を設定する(packagePathListが変更されたときに呼ぶ必要がある)
-        /// 保持している全unitypackageから名前が一致するものを表示用のリストに追加する
+        /// 保持しているunitypackageから名前が一致するものを表示用のリストに追加する
         /// -> サムネイルのLoadAssetやファイルアクセスを都度行うのを避けるためにこのような処理とした
         /// </summary>
         private void SetPackageInfo()
         {
             dispList.Clear();
-            for(int i = 0; i < allPackageInfo.Count; ++i)
+            for(int i = 0; i < ownedPackageInfo.Count; ++i)
             {
                 for(int j = 0; j < packagePathList.Count; ++j)
                 {
                     string filenameNoExt = Path.GetFileNameWithoutExtension(packagePathList[j]);
-                    if (allPackageInfo[i].name == filenameNoExt)
+                    if (ownedPackageInfo[i].name == filenameNoExt)
                     {
-                        dispList.Add(allPackageInfo[i]);
+                        dispList.Add(ownedPackageInfo[i]);
                     }
                 }
             }
