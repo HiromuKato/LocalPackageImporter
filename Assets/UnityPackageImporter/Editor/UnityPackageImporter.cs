@@ -57,6 +57,36 @@ namespace UnityPackageImporter
         private Texture noImage;
 
         /// <summary>
+        /// お気に入りON画像
+        /// </summary>
+        private Texture heart_on;
+
+        /// <summary>
+        /// お気に入りOFF画像
+        /// </summary>
+        private Texture heart_off;
+
+        /// <summary>
+        /// 設定画像
+        /// </summary>
+        private Texture setting;
+
+        /// <summary>
+        /// お気に入りのON/OFFトグル
+        /// </summary>
+        private bool heartToggle = false;
+
+        /// <summary>
+        /// ハートトグルのスタイル
+        /// </summary>
+        private GUIStyle heartToggleStyle;
+
+        /// <summary>
+        /// ハートボタンのスタイル
+        /// </summary>
+        private GUIStyle heartButtonStyle;
+
+        /// <summary>
         /// スクロールポジション
         /// </summary>
         private Vector2 scrollPos;
@@ -126,7 +156,10 @@ namespace UnityPackageImporter
             // ※tmpPathのフォルダは削除されるので変更する場合は注意してください
             tmpPath = Application.dataPath + "/UnityPackageImporter/Editor/tmp";
             infoPath = Application.dataPath + "/UnityPackageImporter/Editor/PackageInfo";
-            noImage = (Texture)AssetDatabase.LoadAssetAtPath("Assets/UnityPackageImporter/Editor/noImage.png", typeof(Texture2D));
+            noImage = (Texture)AssetDatabase.LoadAssetAtPath("Assets/UnityPackageImporter/Editor/Images/noImage.png", typeof(Texture2D));
+            heart_on = (Texture)AssetDatabase.LoadAssetAtPath("Assets/UnityPackageImporter/Editor/Images/heart_on.png", typeof(Texture2D));
+            heart_off = (Texture)AssetDatabase.LoadAssetAtPath("Assets/UnityPackageImporter/Editor/Images/heart_off.png", typeof(Texture2D));
+            setting = (Texture)AssetDatabase.LoadAssetAtPath("Assets/UnityPackageImporter/Editor/Images/setting.png", typeof(Texture2D));
 
             // unitypackageファイルのリストを取得する
             packagePathList = FileAccessor.GetPackageList(localPath);
@@ -166,6 +199,15 @@ namespace UnityPackageImporter
                     string count = "(" + packagePathList.Count + "/" + allPackageNum + ")";
                     GUILayout.Label("Search" + count, EditorStyles.boldLabel);
 
+                    // ハートトグルボタンのスタイル設定
+                    if (heartToggleStyle == null)
+                    {
+                        heartToggleStyle = new GUIStyle(GUI.skin.button);
+                        heartToggleStyle.margin = new RectOffset(0, 0, 0, 0);
+                        heartToggleStyle.padding = new RectOffset(0, 0, 0, 0);
+                    }
+                    heartToggle = GUILayout.Toggle(heartToggle, heartToggle ? heart_on : heart_off, heartToggleStyle, GUILayout.Width(20), GUILayout.Height(20));
+
                     if(GUILayout.Button("Get Package info"))
                     {
                         FileAccessor.ExtractUnityPackageInfo(localPath, infoPath);
@@ -173,6 +215,11 @@ namespace UnityPackageImporter
                         FileAccessor.LoadOwnedPackageInfo(ref ownedPackageInfoList, localPath, infoPath);
                         SetDisplayPackageInfo();
                         AssetDatabase.Refresh();
+                    }
+
+                    if (GUILayout.Button(setting, heartToggleStyle, GUILayout.Width(20), GUILayout.Height(20)))
+                    {
+                        // TODO
                     }
                 }
                 EditorGUILayout.EndHorizontal();
@@ -189,6 +236,13 @@ namespace UnityPackageImporter
                     // 空白のときは全てのパッケージを表示する
                     packagePathList = FileAccessor.GetPackageList(localPath);
                 }
+
+                if(heartToggle)
+                {
+                    // ハートがついたもののみ表示する
+                    packagePathList = GetFavoritePackage();
+                }
+
                 SetDisplayPackageInfo();
                 AssetDatabase.Refresh();
             }
@@ -227,6 +281,17 @@ namespace UnityPackageImporter
                                 }
                             }
                             EditorGUI.EndDisabledGroup();
+
+                            // ハートボタンのスタイル設定
+                            if(heartButtonStyle == null)
+                            {
+                                heartButtonStyle = new GUIStyle(GUI.skin.label);
+                                heartButtonStyle.margin = new RectOffset(32, 0, 0, 0);
+                            }
+                            if (GUILayout.Button(dispList[i].isFavorite ? heart_on : heart_off, heartButtonStyle))
+                            {
+                                PressedFavorite(i);
+                            }
                         }
                         EditorGUILayout.EndVertical();
 
@@ -291,6 +356,50 @@ namespace UnityPackageImporter
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// お気に入りのパッケージを表示する（検索キーワードが入力されている場合も考慮）
+        /// </summary>
+        /// <returns>表示するパッケージのフルパスリスト</returns>
+        private List<string> GetFavoritePackage()
+        {
+            List<string> allList = FileAccessor.GetPackageList(localPath);
+            List<string> pathList = new List<string>();
+            for (int i = 0; i < allList.Count; ++i)
+            {
+                string fileNameNoExt = Path.GetFileNameWithoutExtension(allList[i]);
+                for(int j = 0; j < packagePathList.Count; ++j)
+                {
+                    // 検索後のパッケージパスリスト
+                    string afterFileNameNoExt = Path.GetFileNameWithoutExtension(packagePathList[j]);
+
+                    // 所有しているパッケージの名称と一致し、かつお気に入り、かつ検索後のパッケージパスと一致する場合
+                    if (ownedPackageInfoList[i].name == fileNameNoExt &&
+                        ownedPackageInfoList[i].isFavorite &&
+                        ownedPackageInfoList[i].name == afterFileNameNoExt)
+                    {
+                        pathList.Add(allList[i]);
+                    }
+                }
+            }
+            return pathList;
+        }
+
+        /// <summary>
+        /// （各パッケージの）お気に入りボタンが押された場合
+        /// </summary>
+        /// <param name="index">押されたボタンのインデックス</param>
+        private void PressedFavorite(int index)
+        {
+            UnityPackageInfo info = dispList[index];
+            info.isFavorite = !info.isFavorite;
+            dispList[index] = info;
+            FileAccessor.UpdateFavoriteState(infoPath, dispList[index]);
+
+            // ownedPackageInfoList更新(本来は該当する項目だけの更新としたほうがよい)
+            FileAccessor.LoadOwnedPackageInfo(ref ownedPackageInfoList, localPath, infoPath);
+            AssetDatabase.Refresh();
         }
 
     } // class

@@ -26,5 +26,10 @@ namespace UnityPackageImporter
         /// content id
         /// </summary>
         public string id;
+
+        /// <summary>
+        /// お気に入りかどうか
+        /// </summary>
+        public bool isFavorite;
     }
 }

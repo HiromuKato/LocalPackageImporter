@@ -62,12 +62,12 @@ namespace UnityPackageImporter
         /// <summary>
         /// 保持しているunitypackage情報を全て読み込む
         /// </summary>
-        /// <param name="ownedPackageInfo">保持しているパッケージ情報</param>
+        /// <param name="ownedPackageInfoList">保持しているパッケージ情報リスト</param>
         /// <param name="packagePath">unitypackageのパス</param>
         /// <param name="infoPath">パッケージ情報を格納しているフォルダのパス</param>
-        public static void LoadOwnedPackageInfo(ref List<UnityPackageInfo> ownedPackageInfo, string packagePath, string infoPath)
+        public static void LoadOwnedPackageInfo(ref List<UnityPackageInfo> ownedPackageInfoList, string packagePath, string infoPath)
         {
-            ownedPackageInfo.Clear();
+            ownedPackageInfoList.Clear();
             List<string> allList = FileAccessor.GetPackageList(packagePath);
             foreach (var path in allList)
             {
@@ -78,7 +78,8 @@ namespace UnityPackageImporter
                 info.thumb = (Texture)AssetDatabase.LoadAssetAtPath(dir + "/" + fileNameNoExt + "/icon.png", typeof(Texture2D));
                 info.id = GetContentId(path, infoPath);
                 info.size = GetPackageSize(path);
-                ownedPackageInfo.Add(info);
+                info.isFavorite = GetFavoriteState(infoPath, fileNameNoExt);
+                ownedPackageInfoList.Add(info);
             }
         }
 
@@ -238,7 +239,7 @@ namespace UnityPackageImporter
         /// </summary>
         /// <param name="packagePath">unitypackageのパス</param>
         /// <param name="infoPath">パッケージ情報を格納しているフォルダのパス</param>
-        /// <returns></returns>
+        /// <returns>アセットストアのコンテンツID</returns>
         public static string GetContentId(string packagePath, string infoPath)
         {
             string fileNameNoExt = Path.GetFileNameWithoutExtension(packagePath);
@@ -253,6 +254,47 @@ namespace UnityPackageImporter
             JsonData info = new JsonData();
             info = JsonUtility.FromJson<JsonData>(json);
             return info.id;
+        }
+
+        /// <summary>
+        /// お気に入りかどうかを取得する
+        /// (favファイルが存在すればお気に入りと見なし、なければお気に入りではない)
+        /// </summary>
+        /// <param name="infoPath">パッケージ情報を格納しているフォルダのパス</param>
+        /// <param name="filenameNoExt">パッケージ名</param>
+        /// <returns>お気に入りかどうか</returns>
+        public static bool GetFavoriteState(string infoPath, string filenameNoExt)
+        {
+            string favPath = infoPath + "/" + filenameNoExt + "/fav";
+            if (File.Exists(favPath))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// お気に入り情報を更新する
+        /// </summary>
+        /// <param name="infoPath">パッケージ情報を格納しているフォルダのパス</param>
+        /// <param name="info">パッケージ情報</param>
+        public static void UpdateFavoriteState(string infoPath, UnityPackageInfo info)
+        {
+            string favPath = infoPath + "/" + info.name + "/fav";
+            if(info.isFavorite)
+            {
+                if (!File.Exists(favPath))
+                {
+                    using (File.Create(favPath)) { }
+                }
+            }
+            else
+            {
+                if (File.Exists(favPath))
+                {
+                    File.Delete(favPath);
+                }
+            }
         }
 
         /// <summary>
