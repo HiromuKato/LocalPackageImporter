@@ -4,7 +4,7 @@ using UnityEngine;
 namespace UnityPackageImporter
 {
     [Serializable]
-    public class UnityPackageInfo
+    public class JsonData
     {
         public Category category;
         public string description;

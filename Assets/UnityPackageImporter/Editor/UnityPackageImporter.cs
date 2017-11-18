@@ -529,8 +529,8 @@ namespace UnityPackageImporter
             string json = File.ReadAllText(jsonPath);
 
             // JSONからオブジェクトを作成(一通り取得しているが現状はidしか利用していない)
-            UnityPackageInfo info = new UnityPackageInfo();
-            info = JsonUtility.FromJson<UnityPackageInfo>(json);
+            JsonData info = new JsonData();
+            info = JsonUtility.FromJson<JsonData>(json);
             return info.id;
         }
 
