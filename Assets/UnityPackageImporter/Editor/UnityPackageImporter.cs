@@ -17,7 +17,7 @@ namespace UnityPackageImporter
         /// <summary>
         /// メニュー名
         /// </summary>
-        private const string menuName = "Tool/UnityPackageImporter";
+        private const string menuName = "Window/UnityPackageImporter";
 
         /// <summary>
         /// ローカルのunitypackage格納ディレクトリパス
@@ -95,11 +95,6 @@ namespace UnityPackageImporter
         private readonly int buttonWidth = 80;
 
         /// <summary>
-        /// package名の幅
-        /// </summary>
-        private readonly int nameWidth = 250;
-
-        /// <summary>
         /// Windowを表示する
         /// </summary>
         [MenuItem(menuName)]
@@ -115,7 +110,7 @@ namespace UnityPackageImporter
             var window = EditorWindow.GetWindow(typeof(UnityPackageImporter));
 
             // Windowのタイトルを設定する
-            window.titleContent = new GUIContent("ImportPackage");
+            window.titleContent = new GUIContent("Package List");
         }
 
         /// <summary>
@@ -268,7 +263,7 @@ namespace UnityPackageImporter
                             GUILayout.Button(noImage, GUI.skin.box, GUILayout.Width(thumbWitdh), GUILayout.Height(thumbHeight));
                         }
 
-                        EditorGUILayout.BeginVertical(GUILayout.Width(nameWidth));
+                        EditorGUILayout.BeginVertical();
                         {
                             GUILayout.Label(fileNameNoExt);
                             GUILayout.Label("サイズ: " + dispList[i].size);
