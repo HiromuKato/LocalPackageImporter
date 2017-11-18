@@ -76,7 +76,9 @@ namespace UnityPackageImporter
                 UnityPackageInfo info = new UnityPackageInfo();
                 info.name = fileNameNoExt;
                 info.thumb = (Texture)AssetDatabase.LoadAssetAtPath(dir + "/" + fileNameNoExt + "/icon.png", typeof(Texture2D));
-                info.id = GetContentId(path, infoPath);
+                JsonData json = GetJsonData(path, infoPath);
+                info.id = json.id;
+                info.version = json.version;
                 info.size = GetPackageSize(path);
                 info.isFavorite = GetFavoriteState(infoPath, fileNameNoExt);
                 ownedPackageInfoList.Add(info);
@@ -235,12 +237,12 @@ namespace UnityPackageImporter
         }
 
         /// <summary>
-        /// アセットストアのコンテンツIDを取得する
+        /// アセット情報を取得する
         /// </summary>
         /// <param name="packagePath">unitypackageのパス</param>
         /// <param name="infoPath">パッケージ情報を格納しているフォルダのパス</param>
-        /// <returns>アセットストアのコンテンツID</returns>
-        public static string GetContentId(string packagePath, string infoPath)
+        /// <returns>アセット情報</returns>
+        public static JsonData GetJsonData(string packagePath, string infoPath)
         {
             string fileNameNoExt = Path.GetFileNameWithoutExtension(packagePath);
             string jsonPath = infoPath + "/" + fileNameNoExt + "/info.json";
@@ -250,10 +252,10 @@ namespace UnityPackageImporter
             }
             string json = File.ReadAllText(jsonPath);
 
-            // JSONからオブジェクトを作成(一通り取得しているが現状はidしか利用していない)
+            // JSONからオブジェクトを作成
             JsonData info = new JsonData();
             info = JsonUtility.FromJson<JsonData>(json);
-            return info.id;
+            return info;
         }
 
         /// <summary>

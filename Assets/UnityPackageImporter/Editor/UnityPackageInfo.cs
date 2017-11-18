@@ -28,6 +28,11 @@ namespace UnityPackageImporter
         public string id;
 
         /// <summary>
+        /// バージョン
+        /// </summary>
+        public string version;
+
+        /// <summary>
         /// お気に入りかどうか
         /// </summary>
         public bool isFavorite;

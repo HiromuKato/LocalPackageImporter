@@ -308,6 +308,7 @@ namespace UnityPackageImporter
                         {
                             GUILayout.Label(fileNameNoExt);
                             GUILayout.Label("サイズ: " + dispList[i].size);
+                            GUILayout.Label("バージョン: " + dispList[i].version);
                         }
                         EditorGUILayout.EndVertical();
                     }
