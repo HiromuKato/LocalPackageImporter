@@ -37,6 +37,30 @@ namespace UnityPackageImporter
         }
 
         /// <summary>
+        /// パッケージのメタ情報を保存するパスを取得する
+        /// </summary>
+        /// <returns></returns>
+        public static string GetSavePath()
+        {
+            string path = "";
+            if (SystemInfo.operatingSystem.Contains("Windows"))
+            {
+                // マイドキュメント配下
+                path = Environment.GetFolderPath(Environment.SpecialFolder.Personal) + "/UPackageImporter";
+            }
+            else if (SystemInfo.operatingSystem.Contains("Mac"))
+            {
+                path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Library/UPackageImporter";
+            }
+            else
+            {
+                Debug.LogWarning("Unknown Operating System.");
+                path = "";
+            }
+            return path;
+        }
+
+        /// <summary>
         /// 指定ディレクトリのunitypackageファイルリストを取得する
         /// </summary>
         /// <param name="path">指定ディレクトリパス</param>
@@ -72,13 +96,31 @@ namespace UnityPackageImporter
             foreach (var path in allList)
             {
                 string fileNameNoExt = Path.GetFileNameWithoutExtension(path);
-                string dir = infoPath.Replace(Application.dataPath, "Assets");
                 UnityPackageInfo info = new UnityPackageInfo();
                 info.name = fileNameNoExt;
-                info.thumb = (Texture)AssetDatabase.LoadAssetAtPath(dir + "/" + fileNameNoExt + "/icon.png", typeof(Texture2D));
+                string savePath = infoPath + "/" + fileNameNoExt;
+                CreateDirectoryIfNotFound(savePath);
+                if (!File.Exists(savePath + "/icon.png"))
+                {
+                    info.thumb = null;
+                }
+                else
+                {
+                    Texture2D tex = new Texture2D(1, 1);
+                    tex.LoadImage(File.ReadAllBytes(savePath + "/icon.png"));
+                    info.thumb = tex;
+                }
                 JsonData json = GetJsonData(path, infoPath);
-                info.id = json.id;
-                info.version = json.version;
+                if(json == null)
+                {
+                    info.id = null;
+                    info.version = null;
+                }
+                else
+                {
+                    info.id = json.id;
+                    info.version = json.version;
+                }
                 info.size = GetPackageSize(path);
                 info.isFavorite = GetFavoriteState(infoPath, fileNameNoExt);
                 ownedPackageInfoList.Add(info);
@@ -86,7 +128,7 @@ namespace UnityPackageImporter
         }
 
         /// <summary>
-        /// unitypackageからサムネイルを取得しPackageInfoフォルダ配下に保存する
+        /// unitypackageからサムネイルを取得しinfoPathフォルダ配下に保存する
         /// （注意：unitypackageを解凍してサムネイルを取り出すので時間がかかります）
         /// </summary>
         /// <param name="packagePath">unitypackageのパス</param>
@@ -131,7 +173,7 @@ namespace UnityPackageImporter
                     }
                 }
 
-                // サムネイルをPackageInfo配下にコピー
+                // サムネイルをinfoPath配下にコピー
                 CreateDirectoryIfNotFound(thumbDir);
                 File.Copy(tmpDir + "/.icon.png", thumbDir + "/icon.png", true);
 

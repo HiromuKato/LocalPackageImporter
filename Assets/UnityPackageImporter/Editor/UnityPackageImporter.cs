@@ -155,7 +155,7 @@ namespace UnityPackageImporter
             localPath = FileAccessor.GetLocalPackagePath();
             // ※tmpPathのフォルダは削除されるので変更する場合は注意してください
             tmpPath = Application.dataPath + "/UnityPackageImporter/Editor/tmp";
-            infoPath = Application.dataPath + "/UnityPackageImporter/Editor/PackageInfo";
+            infoPath = FileAccessor.GetSavePath();
             noImage = (Texture)AssetDatabase.LoadAssetAtPath("Assets/UnityPackageImporter/Editor/Images/noImage.png", typeof(Texture2D));
             heart_on = (Texture)AssetDatabase.LoadAssetAtPath("Assets/UnityPackageImporter/Editor/Images/heart_on.png", typeof(Texture2D));
             heart_off = (Texture)AssetDatabase.LoadAssetAtPath("Assets/UnityPackageImporter/Editor/Images/heart_off.png", typeof(Texture2D));
@@ -171,7 +171,7 @@ namespace UnityPackageImporter
             // ローカルに持つ全unitypackage数
             allPackageNum = packagePathList.Count;
 
-            // PackageInfoフォルダに保持しているunitypackage情報を事前に読み込んでおく
+            // infoPathフォルダに保持しているunitypackage情報を事前に読み込んでおく
             ownedPackageInfoList = new List<UnityPackageInfo>();
             FileAccessor.LoadOwnedPackageInfo(ref ownedPackageInfoList, localPath, infoPath);
             SetDisplayPackageInfo();
