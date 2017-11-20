@@ -159,11 +159,11 @@ namespace LocalPackageImporter
             dispList = new List<UnityPackageInfo>();
             localPath = FileAccessor.GetLocalPackagePath();
             // ※tmpPathのフォルダは削除されるので変更する場合は注意してください
-            tmpPath = Application.dataPath + "/UnityPackageImporter/Editor/tmp";
+            tmpPath = Application.dataPath + "/LocalPackageImporter/Editor/tmp";
             infoPath = FileAccessor.GetSavePath();
-            noImage = (Texture)AssetDatabase.LoadAssetAtPath("Assets/UnityPackageImporter/Editor/Images/noImage.png", typeof(Texture2D));
-            heart_on = (Texture)AssetDatabase.LoadAssetAtPath("Assets/UnityPackageImporter/Editor/Images/heart_on.png", typeof(Texture2D));
-            heart_off = (Texture)AssetDatabase.LoadAssetAtPath("Assets/UnityPackageImporter/Editor/Images/heart_off.png", typeof(Texture2D));
+            noImage = (Texture)AssetDatabase.LoadAssetAtPath("Assets/LocalPackageImporter/Editor/Images/noImage.png", typeof(Texture2D));
+            heart_on = (Texture)AssetDatabase.LoadAssetAtPath("Assets/LocalPackageImporter/Editor/Images/heart_on.png", typeof(Texture2D));
+            heart_off = (Texture)AssetDatabase.LoadAssetAtPath("Assets/LocalPackageImporter/Editor/Images/heart_off.png", typeof(Texture2D));
 
             // unitypackageファイルのリストを取得する
             packagePathList = FileAccessor.GetPackageList(localPath);
