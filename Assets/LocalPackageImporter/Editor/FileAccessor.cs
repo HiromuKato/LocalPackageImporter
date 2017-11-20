@@ -46,7 +46,7 @@ namespace LocalPackageImporter
             if (SystemInfo.operatingSystem.Contains("Windows"))
             {
                 // マイドキュメント配下
-                path = Environment.GetFolderPath(Environment.SpecialFolder.Personal) + "/LocalPackageImporter";
+                path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/LocalPackageImporter";
             }
             else if (SystemInfo.operatingSystem.Contains("Mac"))
             {
