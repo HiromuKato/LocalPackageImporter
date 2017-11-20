@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace UnityPackageImporter
+namespace LocalPackageImporter
 {
     [Serializable]
     public class JsonData

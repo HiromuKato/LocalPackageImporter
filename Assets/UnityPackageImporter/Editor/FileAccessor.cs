@@ -6,7 +6,7 @@ using UnityEngine;
 using System.IO.Compression;
 using ICSharpCode.SharpZipLib.Tar;
 
-namespace UnityPackageImporter
+namespace LocalPackageImporter
 {
     /// <summary>
     /// ファイルアクセス周りの操作をまとめた静的クラス
@@ -46,11 +46,11 @@ namespace UnityPackageImporter
             if (SystemInfo.operatingSystem.Contains("Windows"))
             {
                 // マイドキュメント配下
-                path = Environment.GetFolderPath(Environment.SpecialFolder.Personal) + "/UPackageImporter";
+                path = Environment.GetFolderPath(Environment.SpecialFolder.Personal) + "/LocalPackageImporter";
             }
             else if (SystemInfo.operatingSystem.Contains("Mac"))
             {
-                path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Library/UPackageImporter";
+                path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Library/LocalPackageImporter";
             }
             else
             {
@@ -138,11 +138,10 @@ namespace UnityPackageImporter
         {
             List<string> allList = FileAccessor.GetPackageList(packagePath);
 
-
             for (int i = 0; i < allList.Count; ++i)
             {
                 float progress = (float)(i + 1) / (float)allList.Count;
-                EditorUtility.DisplayProgressBar("サムネイル取得中", (i + 1).ToString() + "/" + allList.Count.ToString(), progress);
+                EditorUtility.DisplayProgressBar("Getting unitypackage information", (i + 1).ToString() + "/" + allList.Count.ToString(), progress);
 
                 // ファイル名から拡張子をのぞいた文字列を取得
                 string fileNameNoExt = Path.GetFileNameWithoutExtension(allList[i]);

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace UnityPackageImporter
+namespace LocalPackageImporter
 {
     /// <summary>
     /// unitypackage情報を保持する構造体

@@ -4,17 +4,22 @@ using System.IO;
 using System.Collections.Generic;
 using UnityEditorInternal;
 
-namespace UnityPackageImporter
+namespace LocalPackageImporter
 {
     /// <summary>
     /// ロカールに保持するunitypackageを一覧表示しインポートを可能とするエディタ拡張
     /// </summary>
-    public class UnityPackageImporter : EditorWindow
+    public class LocalPackageImporter : EditorWindow, IHasCustomMenu
     {
+        /// <summary>
+        /// バージョン
+        /// </summary>
+        public static readonly string Version = "1.0.0";
+
         /// <summary>
         /// メニュー名
         /// </summary>
-        private const string menuName = "Window/UnityPackageImporter";
+        private const string menuName = "Window/LocalPackageImporter";
 
         /// <summary>
         /// ローカルのunitypackage格納ディレクトリパス
@@ -67,11 +72,6 @@ namespace UnityPackageImporter
         private Texture heart_off;
 
         /// <summary>
-        /// 設定画像
-        /// </summary>
-        private Texture setting;
-
-        /// <summary>
         /// お気に入りのON/OFFトグル
         /// </summary>
         private bool heartToggle = false;
@@ -85,6 +85,11 @@ namespace UnityPackageImporter
         /// ハートボタンのスタイル
         /// </summary>
         private GUIStyle heartButtonStyle;
+
+        /// <summary>
+        /// サムネイルのスタイル
+        /// </summary>
+        private GUIStyle thumbStyle;
 
         /// <summary>
         /// スクロールポジション
@@ -129,7 +134,7 @@ namespace UnityPackageImporter
             }
 
             // すでにWindowSampleが存在すればそのインスタンスを取得し、なければ生成する
-            var window = EditorWindow.GetWindow(typeof(UnityPackageImporter));
+            var window = EditorWindow.GetWindow(typeof(LocalPackageImporter));
 
             // Windowのタイトルを設定する
             window.titleContent = new GUIContent("Package List");
@@ -159,7 +164,6 @@ namespace UnityPackageImporter
             noImage = (Texture)AssetDatabase.LoadAssetAtPath("Assets/UnityPackageImporter/Editor/Images/noImage.png", typeof(Texture2D));
             heart_on = (Texture)AssetDatabase.LoadAssetAtPath("Assets/UnityPackageImporter/Editor/Images/heart_on.png", typeof(Texture2D));
             heart_off = (Texture)AssetDatabase.LoadAssetAtPath("Assets/UnityPackageImporter/Editor/Images/heart_off.png", typeof(Texture2D));
-            setting = (Texture)AssetDatabase.LoadAssetAtPath("Assets/UnityPackageImporter/Editor/Images/setting.png", typeof(Texture2D));
 
             // unitypackageファイルのリストを取得する
             packagePathList = FileAccessor.GetPackageList(localPath);
@@ -195,31 +199,27 @@ namespace UnityPackageImporter
             {
                 EditorGUILayout.BeginHorizontal();
                 {
-                    searchWord = GUILayout.TextField(searchWord, GUILayout.Width(searchWidth));
-                    string count = "(" + packagePathList.Count + "/" + allPackageNum + ")";
-                    GUILayout.Label("Search" + count, EditorStyles.boldLabel);
-
                     // ハートトグルボタンのスタイル設定
                     if (heartToggleStyle == null)
                     {
                         heartToggleStyle = new GUIStyle(GUI.skin.button);
-                        heartToggleStyle.margin = new RectOffset(0, 0, 0, 0);
+                        heartToggleStyle.margin = new RectOffset(6, 0, 0, 0);
                         heartToggleStyle.padding = new RectOffset(0, 0, 0, 0);
                     }
                     heartToggle = GUILayout.Toggle(heartToggle, heartToggle ? heart_on : heart_off, heartToggleStyle, GUILayout.Width(20), GUILayout.Height(20));
 
-                    if(GUILayout.Button("Get Package info"))
+                    // 検索
+                    searchWord = GUILayout.TextField(searchWord, GUILayout.Width(searchWidth));
+                    string count = "(" + packagePathList.Count + "/" + allPackageNum + ")";
+                    GUILayout.Label("Search" + count, EditorStyles.boldLabel);
+
+                    if(GUILayout.Button("Update package info"))
                     {
                         FileAccessor.ExtractUnityPackageInfo(localPath, infoPath);
                         FileAccessor.ExtractThumbnailsFromPackage(localPath, infoPath, tmpPath);
                         FileAccessor.LoadOwnedPackageInfo(ref ownedPackageInfoList, localPath, infoPath);
                         SetDisplayPackageInfo();
                         AssetDatabase.Refresh();
-                    }
-
-                    if (GUILayout.Button(setting, heartToggleStyle, GUILayout.Width(20), GUILayout.Height(20)))
-                    {
-                        // TODO
                     }
                 }
                 EditorGUILayout.EndHorizontal();
@@ -295,20 +295,27 @@ namespace UnityPackageImporter
                         }
                         EditorGUILayout.EndVertical();
 
-                        if(dispList[i].thumb)
+                        // サムネイルのスタイル設定
+                        if (thumbStyle == null)
                         {
-                            GUILayout.Button(dispList[i].thumb, GUI.skin.box, GUILayout.Width(thumbWitdh), GUILayout.Height(thumbHeight));
+                            thumbStyle = new GUIStyle(GUI.skin.box);
+                            thumbStyle.margin = new RectOffset(0, 0, 0, 0);
+                            thumbStyle.padding = new RectOffset(0, 0, 0, 0);
+                        }
+                        if (dispList[i].thumb)
+                        {
+                            GUILayout.Button(dispList[i].thumb, thumbStyle, GUILayout.Width(thumbWitdh), GUILayout.Height(thumbHeight));
                         }
                         else
                         {
-                            GUILayout.Button(noImage, GUI.skin.box, GUILayout.Width(thumbWitdh), GUILayout.Height(thumbHeight));
+                            GUILayout.Button(noImage, thumbStyle, GUILayout.Width(thumbWitdh), GUILayout.Height(thumbHeight));
                         }
 
                         EditorGUILayout.BeginVertical();
                         {
                             GUILayout.Label(fileNameNoExt);
-                            GUILayout.Label("サイズ: " + dispList[i].size);
-                            GUILayout.Label("バージョン: " + dispList[i].version);
+                            GUILayout.Label("Size: " + dispList[i].size);
+                            GUILayout.Label("Version: " + dispList[i].version);
                         }
                         EditorGUILayout.EndVertical();
                     }
@@ -401,6 +408,21 @@ namespace UnityPackageImporter
             // ownedPackageInfoList更新(本来は該当する項目だけの更新としたほうがよい)
             FileAccessor.LoadOwnedPackageInfo(ref ownedPackageInfoList, localPath, infoPath);
             AssetDatabase.Refresh();
+        }
+
+        /// <summary>
+        /// メニューに項目を追加する
+        /// </summary>
+        /// <param name="menu">メニュー</param>
+        public void AddItemsToMenu(GenericMenu menu)
+        {
+            menu.AddItem(new GUIContent("About"), false, () => {
+                EditorUtility.DisplayDialog(
+                    "About",
+                    "LocalPackageImporter Version " + Version + "\n\n" +
+                    "Copyright 2017 Hi-Rom",
+                    "OK");
+            });
         }
 
     } // class
