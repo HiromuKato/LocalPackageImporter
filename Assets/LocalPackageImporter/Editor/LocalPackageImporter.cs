@@ -19,7 +19,7 @@ namespace LocalPackageImporter
         /// <summary>
         /// メニュー名
         /// </summary>
-        private const string menuName = "Window/LocalPackageImporter";
+        private const string menuName = "Window/Local Package Importer";
 
         /// <summary>
         /// ローカルのunitypackage格納ディレクトリパス
@@ -213,13 +213,9 @@ namespace LocalPackageImporter
                     string count = "(" + packagePathList.Count + "/" + allPackageNum + ")";
                     GUILayout.Label("Search" + count, EditorStyles.boldLabel);
 
-                    if(GUILayout.Button("Update package info"))
+                    if(GUILayout.Button("Update metadata"))
                     {
-                        FileAccessor.ExtractUnityPackageInfo(localPath, infoPath);
-                        FileAccessor.ExtractThumbnailsFromPackage(localPath, infoPath, tmpPath);
-                        FileAccessor.LoadOwnedPackageInfo(ref ownedPackageInfoList, localPath, infoPath);
-                        SetDisplayPackageInfo();
-                        AssetDatabase.Refresh();
+                        UpdateMetadata();
                     }
                 }
                 EditorGUILayout.EndHorizontal();
@@ -326,6 +322,18 @@ namespace LocalPackageImporter
         }
 
         /// <summary>
+        /// unitypackageのメタデータを取得・アップデートします
+        /// </summary>
+        private void UpdateMetadata()
+        {
+            FileAccessor.ExtractUnityPackageInfo(localPath, infoPath);
+            FileAccessor.ExtractThumbnailsFromPackage(localPath, infoPath, tmpPath);
+            FileAccessor.LoadOwnedPackageInfo(ref ownedPackageInfoList, localPath, infoPath);
+            SetDisplayPackageInfo();
+            AssetDatabase.Refresh();
+        }
+
+        /// <summary>
         /// パッケージを検索する
         /// </summary>
         /// <param name="keyword">検索キーワード</param>
@@ -419,9 +427,24 @@ namespace LocalPackageImporter
             menu.AddItem(new GUIContent("About"), false, () => {
                 EditorUtility.DisplayDialog(
                     "About",
-                    "LocalPackageImporter Version " + Version + "\n\n" +
+                    "Local Package Importer Version " + Version + "\n\n" +
                     "Copyright 2017 Hi-Rom",
                     "OK");
+            });
+
+            menu.AddItem(new GUIContent("Open MetaData Folder"), false, () => {
+                if (Application.platform == RuntimePlatform.OSXEditor)
+                {
+                    System.Diagnostics.Process.Start(infoPath);
+                }
+                else if (Application.platform == RuntimePlatform.WindowsEditor)
+                {
+                    EditorUtility.RevealInFinder(infoPath);
+                }
+                else
+                {
+                    Debug.LogWarning("This operating system is not supported.");
+                }
             });
         }
 
