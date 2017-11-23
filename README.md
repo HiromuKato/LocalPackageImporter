@@ -9,22 +9,22 @@
 ![demo](https://raw.githubusercontent.com/HiromuKato/LocalPackageImporter/media/media/localpackageimporter.gif)
 
 ## Requirement
-- Unity 5以上
+- Unity 5.5以上
 
 ## Usage 
-メニューの[WIndow] - [LocalPackageManager]を選択すると起動します  
+メニューの[Window] - [Local Package Importer]を選択すると起動します  
 
 (画面上部の)[♡]ボタン：お気に入りunitypackageのみを表示します  
 検索：インクリメンタルサーチします  
-[Update package info]ボタン：unitypackageのメタデータを取得・アップデートする 
+[Update metadata]ボタン：unitypackageのメタデータを取得・アップデートします 
 
 各unitypackageごとの操作
-- [Import]ボタン：アセットのインポート  
-- [Asset Store]ボタン：選択したパッケージをAsset Storeで表示します  
+- [Import]ボタン：unitypackageをインポートします  
+- [Asset Store]ボタン：選択したunitypackageをAsset Storeで表示します  
 - [♡]ボタン：お気に入りのON/OFFを設定します 
 
 ## Caution
-初回起動時はunitypackageのメタデータを保持していないためアイコン等が表示されません。「Update package info」ボタンを押すことで必要な情報を取得し以下記載のフォルダ配下に保存します。  
+初回起動時はunitypackageのメタデータを保持していないためアイコン等が表示されません。「Update metadata」ボタンを押すことで必要な情報を取得し以下記載のフォルダ配下に保存します。  
   
 メタデータは全Unityプロジェクト共通で利用可能とするため以下に保持しています。本エディタ拡張が必要なくなった場合は以下のフォルダを削除してください。
 - Windows : C:/Users/(ユーザ名)/Documents/LocalPackageImporter
