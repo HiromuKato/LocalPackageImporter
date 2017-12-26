@@ -31,7 +31,7 @@
 - Mac : /Users/(ユーザー名)/Library/LocalPackageImporter
 
 ## Install
-本リポジトリのAssets配下をプロジェクトに取り込むか、[LocalPackageImporter_v1.0.0.unitypackage](https://github.com/HiromuKato/LocalPackageImporter/blob/master/External/LocalPackageImporter_v1.0.0.unitypackage?raw=true)を利用して下さい。
+本リポジトリのAssets配下をプロジェクトに取り込むか、[LocalPackageImporter_v1.0.1.unitypackage](https://github.com/HiromuKato/LocalPackageImporter/blob/master/External/LocalPackageImporter_v1.0.1.unitypackage?raw=true)を利用して下さい。
 
 ## Auther
 [Hiromu Kato](https://github.com/HiromuKato)

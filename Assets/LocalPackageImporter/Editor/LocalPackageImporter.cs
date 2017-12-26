@@ -14,7 +14,7 @@ namespace LocalPackageImporter
         /// <summary>
         /// バージョン
         /// </summary>
-        public static readonly string Version = "1.0.0";
+        public static readonly string Version = "1.0.1";
 
         /// <summary>
         /// メニュー名
@@ -430,6 +430,21 @@ namespace LocalPackageImporter
                     "Local Package Importer Version " + Version + "\n\n" +
                     "Copyright 2017 Hi-Rom",
                     "OK");
+            });
+
+            menu.AddItem(new GUIContent("Open unitypackage Folder"), false, () => {
+                if (Application.platform == RuntimePlatform.OSXEditor)
+                {
+                    System.Diagnostics.Process.Start(localPath);
+                }
+                else if (Application.platform == RuntimePlatform.WindowsEditor)
+                {
+                    EditorUtility.RevealInFinder(localPath);
+                }
+                else
+                {
+                    Debug.LogWarning("This operating system is not supported.");
+                }
             });
 
             menu.AddItem(new GUIContent("Open MetaData Folder"), false, () => {

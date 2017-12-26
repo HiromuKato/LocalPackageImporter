@@ -174,6 +174,11 @@ namespace LocalPackageImporter
 
                 // サムネイルをinfoPath配下にコピー
                 CreateDirectoryIfNotFound(thumbDir);
+                // unitypackage内にアイコンがない場合はスキップ
+                if (!File.Exists(tmpDir + "/.icon.png"))
+                {
+                    continue;
+                }
                 File.Copy(tmpDir + "/.icon.png", thumbDir + "/icon.png", true);
 
                 // 解凍したパッケージフォルダを削除

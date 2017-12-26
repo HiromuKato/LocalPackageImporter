@@ -56,5 +56,9 @@ https://github.com/HiromuKato/LocalPackageImporter
 ================================================================================
 Version History
 ================================================================================
+Version 1.0.1
+ - Fixed an issue that an error occurred when there was no icon in unitypackage.
+ - Added [Open unitypackage Folder] menu.
+
 Version 1.0.0
  - First Release.
