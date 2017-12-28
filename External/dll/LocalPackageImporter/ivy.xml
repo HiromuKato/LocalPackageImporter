@@ -1,0 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ivy-module version="2.0">
+  <info version="1.0.1" organisation="Hi-Rom" module="LocalPackageImporter" e:packageType="UnityExtension" e:unityVersion="2017.3.0f3" xmlns:e="http://ant.apache.org/ivy/extra" />
+  <publications xmlns:e="http://ant.apache.org/ivy/extra">
+    <artifact name="Editor/LocalPackageImporter" type="dll" ext="dll" />
+  </publications>
+</ivy-module>
