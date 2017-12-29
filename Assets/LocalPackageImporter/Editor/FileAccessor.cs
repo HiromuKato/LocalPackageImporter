@@ -154,42 +154,59 @@ namespace LocalPackageImporter
                     continue;
                 }
 
-                // unitypackage解凍先パス
-                string tmpDir = tmpPath + "/" + fileNameNoExt;
-                CreateDirectoryIfNotFound(tmpDir);
-
-                //unitypackage(tar.gz)を読み取り専用で開く
-                using (var tgzStream = File.OpenRead(allList[i]))
+                try
                 {
-                    //GZipStreamオブジェクトを解凍で生成
-                    using (var gzStream = new GZipStream(tgzStream, CompressionMode.Decompress))
+                    // unitypackage解凍先パス
+                    string tmpDir = tmpPath + "/" + fileNameNoExt;
+                    CreateDirectoryIfNotFound(tmpDir);
+
+                    //unitypackage(tar.gz)を読み取り専用で開く
+                    using (var tgzStream = File.OpenRead(allList[i]))
                     {
-                        using (var tarArchive = TarArchive.CreateInputTarArchive(gzStream))
+                        //GZipStreamオブジェクトを解凍で生成
+                        using (var gzStream = new GZipStream(tgzStream, CompressionMode.Decompress))
                         {
-                            //指定したディレクトリにtarを展開
-                            tarArchive.ExtractContents(tmpDir);
+                            using (var tarArchive = TarArchive.CreateInputTarArchive(gzStream))
+                            {
+                                //指定したディレクトリにtarを展開
+                                tarArchive.ExtractContents(tmpDir);
+                            }
                         }
                     }
-                }
 
-                // サムネイルをinfoPath配下にコピー
-                CreateDirectoryIfNotFound(thumbDir);
-                // unitypackage内にアイコンがない場合はスキップ
-                if (!File.Exists(tmpDir + "/.icon.png"))
+                    // サムネイルをinfoPath配下にコピー
+                    CreateDirectoryIfNotFound(thumbDir);
+                    // unitypackage内にアイコンがない場合はスキップ
+                    if (!File.Exists(tmpDir + "/.icon.png"))
+                    {
+                        continue;
+                    }
+                    File.Copy(tmpDir + "/.icon.png", thumbDir + "/icon.png", true);
+
+                    // 解凍したパッケージフォルダを削除
+                    Directory.Delete(tmpDir, true);
+                }
+                catch (Exception e)
                 {
-                    continue;
+                    Debug.LogWarning(e.ToString());
+                    EditorUtility.ClearProgressBar();
                 }
-                File.Copy(tmpDir + "/.icon.png", thumbDir + "/icon.png", true);
+            }
 
-                // 解凍したパッケージフォルダを削除
-                Directory.Delete(tmpDir, true);
-            }
             // tmpディレクトリを削除
-            if (Directory.Exists(tmpPath))
+            try
             {
-                Directory.Delete(tmpPath, true);
+                if (Directory.Exists(tmpPath))
+                {
+                    Directory.Delete(tmpPath, true);
+                }
+                EditorUtility.ClearProgressBar();
             }
-            EditorUtility.ClearProgressBar();
+            catch(Exception e)
+            {
+                Debug.LogWarning(e.ToString());
+                EditorUtility.ClearProgressBar();
+            }
         }
 
         /// <summary>
