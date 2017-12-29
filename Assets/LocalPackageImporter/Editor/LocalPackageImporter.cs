@@ -14,7 +14,7 @@ namespace LocalPackageImporter
         /// <summary>
         /// バージョン
         /// </summary>
-        public static readonly string Version = "1.0.1";
+        public static readonly string Version = "1.0.2";
 
         /// <summary>
         /// メニュー名
@@ -158,9 +158,9 @@ namespace LocalPackageImporter
         {
             dispList = new List<UnityPackageInfo>();
             localPath = FileAccessor.GetLocalPackagePath();
-            // ※tmpPathのフォルダは削除されるので変更する場合は注意してください
-            tmpPath = Application.dataPath + "/LocalPackageImporter/Editor/tmp";
             infoPath = FileAccessor.GetSavePath();
+            // ※tmpPathのフォルダは削除されるので変更する場合は注意してください
+            tmpPath = infoPath + "/tmp";
             noImage = (Texture)AssetDatabase.LoadAssetAtPath("Assets/LocalPackageImporter/Editor/Images/noImage.png", typeof(Texture2D));
             heart_on = (Texture)AssetDatabase.LoadAssetAtPath("Assets/LocalPackageImporter/Editor/Images/heart_on.png", typeof(Texture2D));
             heart_off = (Texture)AssetDatabase.LoadAssetAtPath("Assets/LocalPackageImporter/Editor/Images/heart_off.png", typeof(Texture2D));
