@@ -56,6 +56,11 @@ https://github.com/HiromuKato/LocalPackageImporter
 ================================================================================
 Version History
 ================================================================================
+Version 1.0.2
+ - Updated to draw unitypackage info as much as needed to improve performance.
+ - Updated to handle exception when pushed [Update metadata] button.
+ - Changed tmp path.
+
 Version 1.0.1
  - Fixed an issue that an error occurred when there was no icon in unitypackage.
  - Added [Open unitypackage Folder] menu.

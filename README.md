@@ -1,5 +1,6 @@
 ﻿# LocalPackageImporter
 ロカールフォルダ(※)に保持するunitypackageを一覧表示しインポートを可能とするエディタ拡張  
+[Unity Asset Store](https://assetstore.unity.com/packages/tools/utilities/local-package-importer-105554)
 
 （※)各環境のデフォルトのローカルフォルダは以下
 - Window : C:/Users/(ユーザ名)/AppData/Roaming/Unity\Asset Store-5.x  
@@ -31,7 +32,7 @@
 - Mac : /Users/(ユーザー名)/Library/LocalPackageImporter
 
 ## Install
-本リポジトリのAssets配下をプロジェクトに取り込むか、[LocalPackageImporter_v1.0.1.unitypackage](https://github.com/HiromuKato/LocalPackageImporter/blob/master/External/LocalPackageImporter_v1.0.1.unitypackage?raw=true)を利用して下さい。
+本リポジトリのAssets配下をプロジェクトに取り込むか、[LocalPackageImporter_v1.0.2.unitypackage](https://github.com/HiromuKato/LocalPackageImporter/blob/master/External/LocalPackageImporter_v1.0.2.unitypackage?raw=true)を利用して下さい。
 
 ## Auther
 [Hiromu Kato](https://github.com/HiromuKato)
