@@ -122,6 +122,11 @@ namespace LocalPackageImporter
         private readonly int buttonWidth = 80;
 
         /// <summary>
+        /// スクロールエリアの高さ
+        /// </summary>
+        float rootHeight = 0f;
+
+        /// <summary>
         /// Windowを表示する
         /// </summary>
         [MenuItem(menuName)]
@@ -159,6 +164,11 @@ namespace LocalPackageImporter
             dispList = new List<UnityPackageInfo>();
             localPath = FileAccessor.GetLocalPackagePath();
             infoPath = FileAccessor.GetSavePath();
+            if(infoPath.Equals(""))
+            {
+                Debug.LogError("ERROR");
+                return;
+            }
             // ※tmpPathのフォルダは削除されるので変更する場合は注意してください
             tmpPath = infoPath + "/tmp";
             noImage = (Texture)AssetDatabase.LoadAssetAtPath("Assets/LocalPackageImporter/Editor/Images/noImage.png", typeof(Texture2D));
@@ -244,81 +254,122 @@ namespace LocalPackageImporter
             }
             EditorGUILayout.Space();
 
-            // スクロールビュー
-            scrollPos = EditorGUILayout.BeginScrollView(scrollPos, GUI.skin.box);
+            var scrollArea = EditorGUILayout.BeginHorizontal();
             {
-                for( int i = 0; i < packagePathList.Count; ++i)
+                // スクロールビュー
+                scrollPos = EditorGUILayout.BeginScrollView(scrollPos, GUI.skin.box);
                 {
-                    string path = packagePathList[i];
-                    string fileNameNoExt = Path.GetFileNameWithoutExtension(path);
+                    // 一項目分の高さ
+                    int lineHeight = 74;
 
-                    EditorGUILayout.BeginHorizontal(GUI.skin.box);
+                    // 上部の描画が不要なエリアをスペースで埋める
+                    var startIndex = (int)(scrollPos.y / lineHeight);
+                    GUILayout.Space(startIndex * lineHeight);
+
+                    var listCount = packagePathList.Count;
+                    var endIndex = listCount;
+                    if (rootHeight > 0f)
                     {
-                        EditorGUILayout.BeginVertical(GUILayout.Width(buttonWidth));
+                        // 空白が下部に表示されないようにするためにこのカウント分追加で描画する
+                        int marginCount = 3;
+                        endIndex = startIndex + (int)(rootHeight / lineHeight) + marginCount;
+                        if (endIndex > listCount)
                         {
-                            if (GUILayout.Button("Import"))
-                            {
-                                AssetDatabase.ImportPackage(path, true);
-                            }
+                            endIndex = listCount;
+                        }
+                    }
 
-                            bool disable = false;
-                            if(dispList[i].id == null)
+                    for (int i = startIndex; i < endIndex; ++i)
+                    {
+                        string path = packagePathList[i];
+                        string fileNameNoExt = Path.GetFileNameWithoutExtension(path);
+
+                        EditorGUILayout.BeginHorizontal(GUI.skin.box);
+                        {
+                            EditorGUILayout.BeginVertical(GUILayout.Width(buttonWidth));
                             {
-                                disable = true;
-                            }
-                            EditorGUI.BeginDisabledGroup(disable);
-                            {
-                                if (GUILayout.Button("Asset Store"))
+                                if (GUILayout.Button("Import"))
                                 {
-                                    AssetStore.Open("/content/" + dispList[i].id);
+                                    AssetDatabase.ImportPackage(path, true);
+                                }
 
-                                    // 外部ブラウザで開く場合
-                                    //Application.OpenURL("https://www.assetstore.unity3d.com/jp/#!/content/" + dispList[i].id);
+                                bool disable = false;
+                                if (dispList[i].id == null)
+                                {
+                                    disable = true;
+                                }
+                                EditorGUI.BeginDisabledGroup(disable);
+                                {
+                                    if (GUILayout.Button("Asset Store"))
+                                    {
+                                        AssetStore.Open("/content/" + dispList[i].id);
+
+                                        // 外部ブラウザで開く場合
+                                        //Application.OpenURL("https://www.assetstore.unity3d.com/jp/#!/content/" + dispList[i].id);
+                                    }
+                                }
+                                EditorGUI.EndDisabledGroup();
+
+                                // ハートボタンのスタイル設定
+                                if (heartButtonStyle == null)
+                                {
+                                    heartButtonStyle = new GUIStyle(GUI.skin.label);
+                                    heartButtonStyle.margin = new RectOffset(32, 0, 0, 0);
+                                }
+                                if (GUILayout.Button(dispList[i].isFavorite ? heart_on : heart_off, heartButtonStyle))
+                                {
+                                    PressedFavorite(i);
                                 }
                             }
-                            EditorGUI.EndDisabledGroup();
+                            EditorGUILayout.EndVertical();
 
-                            // ハートボタンのスタイル設定
-                            if(heartButtonStyle == null)
+                            // サムネイルのスタイル設定
+                            if (thumbStyle == null)
                             {
-                                heartButtonStyle = new GUIStyle(GUI.skin.label);
-                                heartButtonStyle.margin = new RectOffset(32, 0, 0, 0);
+                                thumbStyle = new GUIStyle(GUI.skin.box);
+                                thumbStyle.margin = new RectOffset(0, 0, 0, 0);
+                                thumbStyle.padding = new RectOffset(0, 0, 0, 0);
                             }
-                            if (GUILayout.Button(dispList[i].isFavorite ? heart_on : heart_off, heartButtonStyle))
+                            if (dispList[i].thumb)
                             {
-                                PressedFavorite(i);
+                                GUILayout.Button(dispList[i].thumb, thumbStyle, GUILayout.Width(thumbWitdh), GUILayout.Height(thumbHeight));
                             }
-                        }
-                        EditorGUILayout.EndVertical();
+                            else
+                            {
+                                GUILayout.Button(noImage, thumbStyle, GUILayout.Width(thumbWitdh), GUILayout.Height(thumbHeight));
+                            }
 
-                        // サムネイルのスタイル設定
-                        if (thumbStyle == null)
-                        {
-                            thumbStyle = new GUIStyle(GUI.skin.box);
-                            thumbStyle.margin = new RectOffset(0, 0, 0, 0);
-                            thumbStyle.padding = new RectOffset(0, 0, 0, 0);
+                            EditorGUILayout.BeginVertical();
+                            {
+                                GUILayout.Label(fileNameNoExt);
+                                GUILayout.Label("Size: " + dispList[i].size);
+                                GUILayout.Label("Version: " + dispList[i].version);
+                            }
+                            EditorGUILayout.EndVertical();
                         }
-                        if (dispList[i].thumb)
-                        {
-                            GUILayout.Button(dispList[i].thumb, thumbStyle, GUILayout.Width(thumbWitdh), GUILayout.Height(thumbHeight));
-                        }
-                        else
-                        {
-                            GUILayout.Button(noImage, thumbStyle, GUILayout.Width(thumbWitdh), GUILayout.Height(thumbHeight));
-                        }
-
-                        EditorGUILayout.BeginVertical();
-                        {
-                            GUILayout.Label(fileNameNoExt);
-                            GUILayout.Label("Size: " + dispList[i].size);
-                            GUILayout.Label("Version: " + dispList[i].version);
-                        }
-                        EditorGUILayout.EndVertical();
+                        EditorGUILayout.EndHorizontal();
                     }
-                    EditorGUILayout.EndHorizontal();
+
+                    // 下部の描画が不要なエリアをスペースで埋める
+                    GUILayout.Space((listCount - endIndex) * lineHeight);
                 }
+                EditorGUILayout.EndScrollView();
             }
-            EditorGUILayout.EndScrollView();
+            EditorGUILayout.EndHorizontal();
+
+            // スクロールエリアの描画が完了したタイミングで更新
+            if (scrollArea.height > 0f)
+            {
+                rootHeight = scrollArea.height;
+            }
+
+            /*
+            // for DEBUG
+            GUILayout.Label("ScrollArea:" + rootHeight);
+            GUILayout.Label("Window Size : (" + Screen.width.ToString() + ", " + Screen.height.ToString() + ")", EditorStyles.boldLabel);
+            Handles.color = Color.red;
+            Handles.DrawLine(new Vector2(0, 0), new Vector2(100, 100));
+            */
         }
 
         /// <summary>
