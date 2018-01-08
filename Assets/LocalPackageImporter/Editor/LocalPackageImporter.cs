@@ -14,7 +14,7 @@ namespace LocalPackageImporter
         /// <summary>
         /// バージョン
         /// </summary>
-        public static readonly string Version = "1.0.2";
+        public static readonly string Version = "1.0.3";
 
         /// <summary>
         /// メニュー名
@@ -124,7 +124,7 @@ namespace LocalPackageImporter
         /// <summary>
         /// スクロールエリアの高さ
         /// </summary>
-        float rootHeight = 0f;
+        private float rootHeight = 0f;
 
         /// <summary>
         /// Windowを表示する
@@ -377,11 +377,18 @@ namespace LocalPackageImporter
         /// </summary>
         private void UpdateMetadata()
         {
+            // 実行時間計測
+            // System.Diagnostics.Stopwatch watch = System.Diagnostics.Stopwatch.StartNew();
+
             FileAccessor.ExtractUnityPackageInfo(localPath, infoPath);
             FileAccessor.ExtractThumbnailsFromPackage(localPath, infoPath, tmpPath);
             FileAccessor.LoadOwnedPackageInfo(ref ownedPackageInfoList, localPath, infoPath);
             SetDisplayPackageInfo();
             AssetDatabase.Refresh();
+
+            // watch.Stop();
+            // float ms = watch.ElapsedMilliseconds;
+            // Debug.LogFormat("{0} ms", ms);
         }
 
         /// <summary>

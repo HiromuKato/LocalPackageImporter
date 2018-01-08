@@ -166,11 +166,8 @@ namespace LocalPackageImporter
                         //GZipStreamオブジェクトを解凍で生成
                         using (var gzStream = new GZipStream(tgzStream, CompressionMode.Decompress))
                         {
-                            using (var tarArchive = TarArchive.CreateInputTarArchive(gzStream))
-                            {
-                                //指定したディレクトリにtarを展開
-                                tarArchive.ExtractContents(tmpDir);
-                            }
+                            //指定したディレクトリにtarを展開
+                            ExtractTarByEntry(gzStream, tmpDir, false);
                         }
                     }
 
@@ -206,6 +203,103 @@ namespace LocalPackageImporter
             {
                 Debug.LogWarning(e.ToString());
                 EditorUtility.ClearProgressBar();
+            }
+        }
+
+        /// <summary>
+        /// 指定されたtar内のファイルを指定フォルダに展開する
+        /// <see cref="https://github.com/icsharpcode/SharpZipLib/wiki/GZip-and-Tar-Samples#extractFull"/>
+        /// </summary>
+        /// <param name="gzStream">ストリーム</param>
+        /// <param name="targetDir">ターゲットフォルダ</param>
+        /// <param name="asciiTranslate">アスキー変換をおこなうかどうかのフラグ</param>
+        public static void ExtractTarByEntry(Stream inStream, string targetDir, bool asciiTranslate)
+        {
+            TarInputStream tarIn = new TarInputStream(inStream);
+            TarEntry tarEntry;
+            while ((tarEntry = tarIn.GetNextEntry()) != null)
+            {
+                if (tarEntry.IsDirectory)
+                {
+                    continue;
+                }
+
+                // Converts the unix forward slashes in the filenames to windows backslashes
+                string name = tarEntry.Name.Replace('/', Path.DirectorySeparatorChar);
+
+                // Remove any root e.g. '\' because a PathRooted filename defeats Path.Combine
+                if (Path.IsPathRooted(name))
+                {
+                    name = name.Substring(Path.GetPathRoot(name).Length);
+                }
+
+                // Apply further name transformations here as necessary
+                string outName = Path.Combine(targetDir, name);
+
+                // アイコンファイル以外は展開しない
+                if(!Path.GetFileName(outName).Equals(".icon.png"))
+                {
+                    continue;
+                }
+
+                string directoryName = Path.GetDirectoryName(outName);
+                Directory.CreateDirectory(directoryName); // Does nothing if directory exists
+
+                FileStream outStr = new FileStream(outName, FileMode.Create);
+
+                if (asciiTranslate)
+                {
+                    CopyWithAsciiTranslate(tarIn, outStr);
+                }
+                else
+                {
+                    tarIn.CopyEntryContents(outStr);
+                }
+                outStr.Close();
+                // Set the modification date/time. This approach seems to solve timezone issues.
+                DateTime myDt = DateTime.SpecifyKind(tarEntry.ModTime, DateTimeKind.Utc);
+                File.SetLastWriteTime(outName, myDt);
+            }
+            tarIn.Close();
+        }
+
+        private static void CopyWithAsciiTranslate(TarInputStream tarIn, Stream outStream)
+        {
+            byte[] buffer = new byte[4096];
+            bool isAscii = true;
+            bool cr = false;
+
+            int numRead = tarIn.Read(buffer, 0, buffer.Length);
+            int maxCheck = Math.Min(200, numRead);
+            for (int i = 0; i < maxCheck; i++)
+            {
+                byte b = buffer[i];
+                if (b < 8 || (b > 13 && b < 32) || b == 255)
+                {
+                    isAscii = false;
+                    break;
+                }
+            }
+            while (numRead > 0)
+            {
+                if (isAscii)
+                {
+                    // Convert LF without CR to CRLF. Handle CRLF split over buffers.
+                    for (int i = 0; i < numRead; i++)
+                    {
+                        byte b = buffer[i]; // assuming plain Ascii and not UTF-16
+                        if (b == 10 && !cr)     // LF without CR
+                            outStream.WriteByte(13);
+                        cr = (b == 13);
+
+                        outStream.WriteByte(b);
+                    }
+                }
+                else
+                {
+                    outStream.Write(buffer, 0, numRead);
+                }
+                numRead = tarIn.Read(buffer, 0, buffer.Length);
             }
         }
 

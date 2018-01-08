@@ -56,6 +56,9 @@ https://github.com/HiromuKato/LocalPackageImporter
 ================================================================================
 Version History
 ================================================================================
+Version 1.0.3
+ - Improved performance when pushed [Update metadata] button.
+
 Version 1.0.2
  - Updated to draw unitypackage info as much as needed to improve performance.
  - Updated to handle exception when pushed [Update metadata] button.
