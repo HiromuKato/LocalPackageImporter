@@ -25,11 +25,15 @@
 - [♡]ボタン：お気に入りのON/OFFを設定します 
 
 ## Caution
+### メタデータについて
 初回起動時はunitypackageのメタデータを保持していないためアイコン等が表示されません。「Update metadata」ボタンを押すことで必要な情報を取得し以下記載のフォルダ配下に保存します。  
   
 メタデータは全Unityプロジェクト共通で利用可能とするため以下に保持しています。本エディタ拡張が必要なくなった場合は以下のフォルダを削除してください。
 - Windows : C:/Users/(ユーザ名)/Documents/LocalPackageImporter
 - Mac : /Users/(ユーザー名)/Library/LocalPackageImporter
+  
+### ICSharpCode.SharpZipLibのエラー
+ICSharpCode.SharpZipLibを利用したunitypackageが他にあると競合しエラー表示されます。その場合はAssets/LocalPackageImporter/Plugins/ICSharpCode.SharpZipLib.dllを削除してください。
 
 ## Install
 本リポジトリのAssets配下をプロジェクトに取り込むか、[LocalPackageImporter_v1.0.3.unitypackage](https://github.com/HiromuKato/LocalPackageImporter/blob/master/External/LocalPackageImporter_v1.0.3.unitypackage?raw=true)を利用して下さい。
